@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Demo - i3 Knowledge Base</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f8fb;
+      color: #0d1e30;
+    }
+    #root { width: 100%; min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+    // ─── Data Layer ──────────────────────────────────────────────────────────────
+    const PRODUCT_TREE = [
+      {
+        id: "getting-started",
+        label: "Getting Started",
+        icon: null,
+        children: [
+          { id: "gs-overview", label: "Overview", content: "gs-overview" },
+          { id: "gs-system-req", label: "System Requirements", content: "gs-system-req" },
+        ],
+      },
+      {
+        id: "srx-pro-mobile",
+        label: "SRX-Pro Mobile App",
+        icon: null,
+        children: [
+          { id: "mob-overview", label: "Overview", content: "mob-overview" },
+          {
+            id: "mob-install",
+            label: "Installation",
+            children: [
+              { id: "mob-install-ios", label: "iOS", content: "mob-install-ios" },
+              { id: "mob-install-android", label: "Android", content: "mob-install-android" },
+              { id: "mob-install-bb", label: "BlackBerry", content: "mob-install-bb" },
+            ],
+          },
+          {
+            id: "mob-connections",
+            label: "Remote Connections",
+            children: [
+              { id: "mob-add-connection", label: "Add a Connection", content: "mob-add-connection" },
+              { id: "mob-edit-connection", label: "Edit a Connection", content: "mob-edit-connection" },
+              { id: "mob-delete-connection", label: "Delete a Connection", content: "mob-delete-connection" },
+              { id: "mob-server-groups", label: "Server Groups", content: "mob-server-groups" },
+            ],
+          },
+          {
+            id: "mob-live-view",
+            label: "Live Viewing",
+            children: [
+              { id: "mob-connect-server", label: "Connect to a Server", content: "mob-connect-server" },
+              { id: "mob-screen-layout", label: "Screen Layout & Navigation", content: "mob-screen-layout" },
+              { id: "mob-channel-mapping", label: "Channel Mapping", content: "mob-channel-mapping" },
+              { id: "mob-disconnect", label: "Disconnect & Exit", content: "mob-disconnect" },
+            ],
+          },
+          {
+            id: "mob-settings",
+            label: "Settings",
+            children: [
+              { id: "mob-video-settings", label: "Video Quality & Frame Rate", content: "mob-video-settings" },
+              { id: "mob-ratio-view", label: "Ratio View", content: "mob-ratio-view" },
+              { id: "mob-alarm-settings", label: "Alarm Settings", content: "mob-alarm-settings" },
+            ],
+          },
+          {
+            id: "mob-features",
+            label: "Features",
+            children: [
+              { id: "mob-ptz", label: "PTZ Camera Control", content: "mob-ptz" },
+              { id: "mob-snapshot", label: "Taking Snapshots", content: "mob-snapshot" },
+              { id: "mob-alarm-logs", label: "Searching Alarm Logs", content: "mob-alarm-logs" },
+            ],
+          },
+          { id: "mob-hotkeys", label: "Keyboard Shortcuts", content: "mob-hotkeys" },
+          { id: "mob-troubleshoot", label: "Troubleshooting", content: "mob-troubleshoot" },
+        ],
+      },
+      {
+        id: "srx-pro-manuals",
+        label: "SRX-Pro Server",
+        icon: null,
+        children: [
+          { id: "srx-overview", label: "Product Overview", content: "srx-overview" },
+          { id: "srx-server-info", label: "Server Info Setup", content: "srx-server-info" },
+          { id: "srx-user-mgmt", label: "User Management", content: "srx-user-mgmt" },
+        ],
+      },
+      {
+        id: "vpc",
+        label: "Video Pilot Client (VPC)",
+        icon: null,
+        children: [
+          { id: "vpc-overview", label: "Overview", content: "vpc-overview" },
+          { id: "vpc-getting-started", label: "Getting Started", children: [
+            { id: "vpc-launch", label: "Launch & Login", content: "vpc-launch" },
+            { id: "vpc-ui", label: "Navigating the Interface", content: "vpc-ui" },
+            { id: "vpc-screen-div", label: "Screen Divisions", content: "vpc-screen-div" },
+          ]},
+          { id: "vpc-servers", label: "Server Connections", children: [
+            { id: "vpc-add-server", label: "Add a Server", content: "vpc-add-server" },
+            { id: "vpc-add-i3host", label: "Connect via i3Host", content: "vpc-add-i3host" },
+            { id: "vpc-add-cms", label: "Connect via CMS", content: "vpc-add-cms" },
+            { id: "vpc-server-groups", label: "Server Groups", content: "vpc-server-groups" },
+            { id: "vpc-disconnect", label: "Disconnect", content: "vpc-disconnect" },
+          ]},
+          { id: "vpc-cameras", label: "Camera Management", children: [
+            { id: "vpc-cam-connect", label: "Connect to Cameras", content: "vpc-cam-connect" },
+            { id: "vpc-favorites", label: "Favorites", content: "vpc-favorites" },
+            { id: "vpc-color-tags", label: "Color Tags", content: "vpc-color-tags" },
+            { id: "vpc-maps", label: "Maps & Linked Cameras", content: "vpc-maps" },
+          ]},
+          { id: "vpc-live", label: "Live Viewing", children: [
+            { id: "vpc-live-controls", label: "On-Screen Controls", content: "vpc-live-controls" },
+            { id: "vpc-ptz", label: "PTZ & Fisheye Control", content: "vpc-ptz" },
+            { id: "vpc-quick-search", label: "Quick Search", content: "vpc-quick-search" },
+          ]},
+          { id: "vpc-search", label: "Video Search", children: [
+            { id: "vpc-calendar-search", label: "Calendar Search", content: "vpc-calendar-search" },
+            { id: "vpc-advanced-search", label: "Advanced Search", content: "vpc-advanced-search" },
+          ]},
+          { id: "vpc-backup", label: "Video Backup", children: [
+            { id: "vpc-backup-create", label: "Create a Backup", content: "vpc-backup-create" },
+            { id: "vpc-backup-formats", label: "Backup Formats", content: "vpc-backup-formats" },
+          ]},
+          { id: "vpc-player", label: "VPC Player", children: [
+            { id: "vpc-player-overview", label: "Overview", content: "vpc-player-overview" },
+            { id: "vpc-player-playback", label: "Playback Controls", content: "vpc-player-playback" },
+          ]},
+        ],
+      },
+      {
+        id: "api-ref",
+        label: "API Reference",
+        icon: null,
+        children: [
+          { id: "api-auth", label: "Authentication", content: "api-auth" },
+          { id: "api-endpoints", label: "Endpoints", content: "api-endpoints" },
+          { id: "api-webhooks", label: "Webhooks", content: "api-webhooks" },
+        ],
+      },
+    ];
+
+    const CONTENT = {
+      "gs-overview": {
+        title: "Overview",
+        updated: "2026-03-10",
+        readTime: "2 min",
+        tags: ["getting-started"],
+        body: [
+          { type: "intro", text: "Welcome to the i3 International product documentation. This knowledge base provides comprehensive guides, configuration references, and troubleshooting resources for the i3 product ecosystem." },
+          { type: "callout", variant: "tip", title: "New to i3?", text: "Start with the SRX-Pro Mobile App section to learn how to connect to your SRX-Pro server remotely from your mobile device." },
+          { type: "heading", text: "Documentation Sections" },
+          { type: "grid", items: [
+            { icon: null, title: "SRX-Pro Mobile App", desc: "Install, configure, and use the SRX-Pro Mobile Remote app on iOS, Android, or BlackBerry devices." },
+            { icon: null, title: "SRX-Pro Server", desc: "Server setup, configuration, user management, and recording system administration." },
+            { icon: null, title: "Video Pilot Client", desc: "Desktop application for video surveillance, playback, search, and multi-connection management." },
+            { icon: null, title: "API Reference", desc: "RESTful API endpoints, authentication, webhooks, and integration capabilities." },
+          ]},
+        ],
+      },
+      "gs-system-req": {
+        title: "System Requirements",
+        updated: "2026-03-10",
+        readTime: "3 min",
+        tags: ["getting-started"],
+        body: [
+          { type: "intro", text: "Before deploying i3 products, ensure your infrastructure meets the following minimum specifications." },
+          { type: "heading", text: "Server Requirements" },
+          { type: "table", rows: [
+            { header: true, cells: ["Component", "Minimum", "Recommended"] },
+            { cells: ["CPU", "Intel Xeon E5-2600 or equivalent", "Intel Xeon E5-2600 v4 or newer"] },
+            { cells: ["RAM", "16 GB", "32 GB or more"] },
+            { cells: ["Storage", "2 TB HDD", "4 TB SSD or NVMe"] },
+            { cells: ["Network", "1 Gbps Ethernet", "10 Gbps Ethernet"] },
+          ]},
+          { type: "heading", text: "Client Requirements" },
+          { type: "list", items: ["Windows 7 SP1 or later", "macOS 10.12 or later", "Linux kernel 3.10+"] },
+        ],
+      },
+      "mob-overview": {
+        title: "SRX-Pro Mobile App Overview",
+        updated: "2026-03-15",
+        readTime: "5 min",
+        tags: ["mobile"],
+        body: [
+          { type: "intro", text: "The SRX-Pro Mobile Remote App enables secure remote access to your SRX-Pro system from iOS, Android, and BlackBerry devices. Watch live video, manage connections, control PTZ cameras, and perform remote configurations—all from your mobile device." },
+          { type: "callout", variant: "info", title: "Supported Platforms", text: "iOS 10.0+, Android 6.0+, BlackBerry 10.0+" },
+          { type: "heading", text: "Key Features" },
+          { type: "list", items: ["Live video viewing from multiple cameras", "PTZ (Pan-Tilt-Zoom) camera control", "Remote connection management", "Motion detection and alarm notifications", "Snapshot capture and video recording", "Multi-language support"] },
+        ],
+      },
+      "mob-install-ios": {
+        title: "Installing on iOS",
+        updated: "2026-03-15",
+        readTime: "3 min",
+        tags: ["mobile", "installation"],
+        body: [
+          { type: "heading", text: "Installation Steps" },
+          { type: "steps", items: [
+            "Open the App Store on your iOS device",
+            "Search for 'SRX-Pro Remote'",
+            "Tap 'Get' then 'Install'",
+            "Authenticate with your Apple ID",
+            "Wait for installation to complete",
+            "Tap 'Open' to launch the app",
+          ]},
+          { type: "callout", variant: "tip", title: "Minimum Requirements", text: "iOS 10.0 or later, 50 MB free storage space" },
+        ],
+      },
+      "mob-install-android": {
+        title: "Installing on Android",
+        updated: "2026-03-15",
+        readTime: "3 min",
+        tags: ["mobile", "installation"],
+        body: [
+          { type: "heading", text: "Installation Steps" },
+          { type: "steps", items: [
+            "Open Google Play Store",
+            "Search for 'SRX-Pro Remote'",
+            "Tap 'Install'",
+            "Grant requested permissions",
+            "Wait for installation to complete",
+            "Tap 'Open' to launch the app",
+          ]},
+          { type: "callout", variant: "tip", title: "Minimum Requirements", text: "Android 6.0 or later, 50 MB free storage space" },
+        ],
+      },
+      "mob-install-bb": {
+        title: "Installing on BlackBerry",
+        updated: "2026-03-15",
+        readTime: "3 min",
+        tags: ["mobile", "installation"],
+        body: [
+          { type: "intro", text: "BlackBerry support via BlackBerry World App Store." },
+          { type: "steps", items: [
+            "Open BlackBerry World",
+            "Search for 'SRX-Pro Remote'",
+            "Tap 'Download'",
+            "Confirm installation",
+            "Wait for completion",
+            "Tap 'Open' to launch",
+          ]},
+        ],
+      },
+      "mob-add-connection": { title: "Add a Connection", body: [{ type: "intro", text: "Learn how to add a new server connection to your mobile app." }] },
+      "mob-edit-connection": { title: "Edit a Connection", body: [{ type: "intro", text: "Modify existing server connection settings." }] },
+      "mob-delete-connection": { title: "Delete a Connection", body: [{ type: "intro", text: "Remove server connections from your mobile device." }] },
+      "mob-server-groups": { title: "Server Groups", body: [{ type: "intro", text: "Organize multiple connections into logical groups." }] },
+      "mob-connect-server": { title: "Connect to a Server", body: [{ type: "intro", text: "Establish a connection to a remote SRX-Pro server." }] },
+      "mob-screen-layout": { title: "Screen Layout & Navigation", body: [{ type: "intro", text: "Overview of the mobile app interface and navigation." }] },
+      "mob-channel-mapping": { title: "Channel Mapping", body: [{ type: "intro", text: "Configure camera channels and their display order." }] },
+      "mob-disconnect": { title: "Disconnect & Exit", body: [{ type: "intro", text: "Properly disconnect from servers and exit the app." }] },
+      "mob-video-settings": { title: "Video Quality & Frame Rate", body: [{ type: "intro", text: "Adjust video streaming quality and frame rate." }] },
+      "mob-ratio-view": { title: "Ratio View", body: [{ type: "intro", text: "Switch between different aspect ratio viewing modes." }] },
+      "mob-alarm-settings": { title: "Alarm Settings", body: [{ type: "intro", text: "Configure alarm notifications and responses." }] },
+      "mob-ptz": { title: "PTZ Camera Control", body: [{ type: "intro", text: "Control pan, tilt, and zoom camera movements." }] },
+      "mob-snapshot": { title: "Taking Snapshots", body: [{ type: "intro", text: "Capture and save snapshot images from live video." }] },
+      "mob-alarm-logs": { title: "Searching Alarm Logs", body: [{ type: "intro", text: "Find and review historical alarm events." }] },
+      "mob-hotkeys": { title: "Keyboard Shortcuts", body: [{ type: "intro", text: "Quick reference for available keyboard shortcuts." }] },
+      "mob-troubleshoot": { title: "Troubleshooting", body: [{ type: "intro", text: "Common issues and solutions for mobile app." }] },
+      "srx-overview": { title: "Product Overview", body: [{ type: "intro", text: "SRX-Pro server system overview and capabilities." }] },
+      "srx-server-info": { title: "Server Info Setup", body: [{ type: "intro", text: "Configure basic server information and settings." }] },
+      "srx-user-mgmt": { title: "User Management", body: [{ type: "intro", text: "Create and manage user accounts and permissions." }] },
+      "vpc-overview": { title: "Video Pilot Client Overview", body: [{ type: "intro", text: "Desktop client for video surveillance and management." }] },
+      "vpc-launch": { title: "Launch & Login", body: [{ type: "intro", text: "Start the application and authenticate." }] },
+      "vpc-ui": { title: "Navigating the Interface", body: [{ type: "intro", text: "Learn the layout and main UI components." }] },
+      "vpc-screen-div": { title: "Screen Divisions", body: [{ type: "intro", text: "Configure multi-camera display layouts." }] },
+      "vpc-add-server": { title: "Add a Server", body: [{ type: "intro", text: "Register a new server connection." }] },
+      "vpc-add-i3host": { title: "Connect via i3Host", body: [{ type: "intro", text: "Use i3Host for simplified connections." }] },
+      "vpc-add-cms": { title: "Connect via CMS", body: [{ type: "intro", text: "Connect through a CMS system." }] },
+      "vpc-server-groups": { title: "Server Groups", body: [{ type: "intro", text: "Organize servers into groups." }] },
+      "vpc-disconnect": { title: "Disconnect", body: [{ type: "intro", text: "Safely disconnect from servers." }] },
+      "vpc-cam-connect": { title: "Connect to Cameras", body: [{ type: "intro", text: "Add and connect to network cameras." }] },
+      "vpc-favorites": { title: "Favorites", body: [{ type: "intro", text: "Create shortcuts to frequently used cameras." }] },
+      "vpc-color-tags": { title: "Color Tags", body: [{ type: "intro", text: "Organize cameras with color tags." }] },
+      "vpc-maps": { title: "Maps & Linked Cameras", body: [{ type: "intro", text: "Use floor plans and linked camera views." }] },
+      "vpc-live-controls": { title: "On-Screen Controls", body: [{ type: "intro", text: "Controls available during live viewing." }] },
+      "vpc-ptz": { title: "PTZ & Fisheye Control", body: [{ type: "intro", text: "Control PTZ and fisheye cameras." }] },
+      "vpc-quick-search": { title: "Quick Search", body: [{ type: "intro", text: "Fast search within current view." }] },
+      "vpc-calendar-search": { title: "Calendar Search", body: [{ type: "intro", text: "Search video by date and time." }] },
+      "vpc-advanced-search": { title: "Advanced Search", body: [{ type: "intro", text: "Advanced search with multiple filters." }] },
+      "vpc-backup-create": { title: "Create a Backup", body: [{ type: "intro", text: "Export video for backup or sharing." }] },
+      "vpc-backup-formats": { title: "Backup Formats", body: [{ type: "intro", text: "Supported video export formats." }] },
+      "vpc-player-overview": { title: "VPC Player Overview", body: [{ type: "intro", text: "Information about the standalone player." }] },
+      "vpc-player-playback": { title: "Playback Controls", body: [{ type: "intro", text: "Control video playback during review." }] },
+      "api-auth": { title: "Authentication", body: [{ type: "intro", text: "API authentication methods and token management." }] },
+      "api-endpoints": { title: "API Endpoints", body: [{ type: "intro", text: "Complete REST API endpoint reference." }] },
+      "api-webhooks": { title: "Webhooks", body: [{ type: "intro", text: "Event-driven webhooks for real-time updates." }] },
+    };
+
+    function getContentForId(id) {
+      return CONTENT[id] || {
+        title: "Page Not Found",
+        body: [{ type: "intro", text: "This page content is not yet available in the demo." }]
+      };
+    }
+
+    function getAllPages() {
+      const pages = [];
+      function walk(items) {
+        items.forEach(item => {
+          if (item.content) {
+            pages.push({ id: item.content, label: item.label, parentLabel: null });
+          }
+          if (item.children) walk(item.children);
+        });
+      }
+      walk(PRODUCT_TREE);
+      return pages;
+    }
+
+    const ALL_PAGES = getAllPages();
+
+    function renderContent(content) {
+      if (!content) return null;
+      
+      if (typeof content === "string") {
+        return <p style={styles.paragraph}>{content}</p>;
+      }
+
+      if (Array.isArray(content)) {
+        return content.map((item, idx) => renderContentBlock(item, idx));
+      }
+
+      return renderContentBlock(content);
+    }
+
+    function renderContentBlock(block, key = 0) {
+      if (!block) return null;
+      const { type, text, title, html, variant, items, rows } = block;
+
+      switch (type) {
+        case "intro":
+          return <p key={key} style={styles.intro}>{text}</p>;
+        case "heading":
+          return <h2 key={key} style={styles.h2}>{text}</h2>;
+        case "paragraph":
+          return <p key={key} style={styles.paragraph}>{text}</p>;
+        case "callout":
+          return (
+            <div key={key} style={{ ...styles.callout, borderLeftColor: variant === "tip" ? "#00A661" : variant === "warning" ? "#FFC107" : "#0069a8" }}>
+              {title && <div style={styles.calloutHeader}>{title}</div>}
+              <div style={styles.calloutText}>{text}</div>
+            </div>
+          );
+        case "list":
+          return (
+            <ul key={key} style={styles.list}>
+              {items?.map((item, i) => (
+                <li key={i} style={styles.listItem}>{item}</li>
+              ))}
+            </ul>
+          );
+        case "steps":
+          return (
+            <div key={key} style={styles.steps}>
+              {items?.map((item, i) => (
+                <div key={i} style={styles.stepItem}>
+                  <div style={styles.stepNum}>{i + 1}</div>
+                  <div>{item}</div>
+                </div>
+              ))}
+            </div>
+          );
+        case "table":
+          return (
+            <div key={key} style={styles.tableWrap}>
+              <table style={styles.table}>
+                <tbody>
+                  {rows?.map((row, i) => (
+                    <tr key={i} style={row.header ? {} : (i % 2 === 1 ? { backgroundColor: "#f8f9fb" } : {})}>
+                      {row.cells?.map((cell, j) => (
+                        row.header ? (
+                          <th key={j} style={styles.th}>{cell}</th>
+                        ) : (
+                          <td key={j} style={styles.td}>{cell}</td>
+                        )
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        case "grid":
+          return (
+            <div key={key} style={styles.grid}>
+              {items?.map((item, i) => (
+                <div key={i} style={styles.gridCard}>
+                  <div style={styles.gridTitle}>{item.title}</div>
+                  <div style={styles.gridDesc}>{item.desc}</div>
+                </div>
+              ))}
+            </div>
+          );
+        default:
+          return null;
+      }
+    }
+
+    function DocsPortal() {
+      const [selectedId, setSelectedId] = useState("gs-overview");
+      const [searchOpen, setSearchOpen] = useState(false);
+      const [searchQuery, setSearchQuery] = useState("");
+      const [platform, setPlatform] = useState("all");
+      const searchInputRef = useRef(null);
+
+      const searchResults = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase();
+        return ALL_PAGES.filter(page => 
+          page.label.toLowerCase().includes(q) ||
+          page.id.toLowerCase().includes(q)
+        ).slice(0, 10);
+      }, [searchQuery]);
+
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+            e.preventDefault();
+            setSearchOpen(true);
+          }
+          if (e.key === "Escape") setSearchOpen(false);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+      }, []);
+
+      useEffect(() => {
+        if (searchOpen && searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, [searchOpen]);
+
+      const currentContent = getContentForId(selectedId);
+      const currentPageIndex = ALL_PAGES.findIndex(p => p.id === selectedId);
+      const prevPage = currentPageIndex > 0 ? ALL_PAGES[currentPageIndex - 1] : null;
+      const nextPage = currentPageIndex < ALL_PAGES.length - 1 ? ALL_PAGES[currentPageIndex + 1] : null;
+
+      const breadcrumbs = [];
+      function findBreadcrumbs(items, target, path = []) {
+        for (let item of items) {
+          if (item.content === target) {
+            return [...path, item];
+          }
+          if (item.children) {
+            const result = findBreadcrumbs(item.children, target, [...path, item]);
+            if (result) return result;
+          }
+        }
+        return null;
+      }
+      const crumbPath = findBreadcrumbs(PRODUCT_TREE, selectedId) || [];
+
+      return (
+        <div style={styles.portal}>
+          {/* Header */}
+          <div style={styles.header}>
+            <div style={styles.headerContent}>
+              <div>
+                <div style={styles.logo}>i3 Knowledge Base</div>
+                <div style={styles.subtitle}>Interactive Demo</div>
+              </div>
+              <button
+                style={styles.searchBtn}
+                onClick={() => setSearchOpen(true)}
+              >
+                🔍 Search <span style={styles.kbd}>⌘K</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search Overlay */}
+          {searchOpen && (
+            <div style={styles.searchOverlay} onClick={() => setSearchOpen(false)}>
+              <div style={styles.searchModal} onClick={(e) => e.stopPropagation()}>
+                <div style={styles.searchInputWrap}>
+                  <span>🔍</span>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search documentation..."
+                    style={styles.searchInput}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div style={styles.searchResults}>
+                  {searchResults.length > 0 ? (
+                    searchResults.map((page) => (
+                      <button
+                        key={page.id}
+                        style={styles.searchResult}
+                        onClick={() => {
+                          setSelectedId(page.id);
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <div style={styles.searchResultTitle}>{page.label}</div>
+                        <div style={styles.searchResultPath}>{page.id}</div>
+                      </button>
+                    ))
+                  ) : searchQuery ? (
+                    <div style={styles.searchEmpty}>No results found</div>
+                  ) : (
+                    <div style={styles.searchEmpty}>Type to search...</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Layout */}
+          <div style={styles.mainContent}>
+            {/* Sidebar */}
+            <div style={styles.sidebar}>
+              <div style={styles.sidebarScroll}>
+                {PRODUCT_TREE.map((section) => (
+                  <TreeNode
+                    key={section.id}
+                    item={section}
+                    selected={selectedId}
+                    onSelect={setSelectedId}
+                    level={0}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div style={styles.contentArea}>
+              {/* Breadcrumbs */}
+              <div style={styles.breadcrumbs}>
+                {crumbPath.map((item, idx) => (
+                  <React.Fragment key={item.id}>
+                    {idx > 0 && <span style={styles.breadcrumbSep}>›</span>}
+                    {item.content === selectedId ? (
+                      <span style={styles.breadcrumbActive}>{item.label}</span>
+                    ) : (
+                      <button
+                        style={styles.breadcrumbLink}
+                        onClick={() => setSelectedId(item.content)}
+                      >
+                        {item.label}
+                      </button>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Page Content */}
+              <div>
+                <h1 style={styles.pageTitle}>{currentContent.title}</h1>
+                <div style={styles.meta}>
+                  {currentContent.updated && (
+                    <>
+                      <span>Updated {currentContent.updated}</span>
+                      <span style={styles.metaDot}>•</span>
+                    </>
+                  )}
+                  {currentContent.readTime && (
+                    <>
+                      <span>{currentContent.readTime} read</span>
+                      <span style={styles.metaDot}>•</span>
+                    </>
+                  )}
+                  {currentContent.tags?.map((tag) => (
+                    <span key={tag} style={styles.tag}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.contentBody}>
+                {renderContent(currentContent.body)}
+              </div>
+
+              {/* Prev / Next */}
+              {(prevPage || nextPage) && (
+                <div style={styles.prevNext}>
+                  {prevPage ? (
+                    <button
+                      style={styles.prevNextBtn}
+                      onClick={() => setSelectedId(prevPage.id)}
+                    >
+                      <span style={styles.prevNextLabel}>← Previous</span>
+                      <span style={styles.prevNextTitle}>{prevPage.label}</span>
+                    </button>
+                  ) : <div />}
+                  {nextPage ? (
+                    <button
+                      style={styles.prevNextBtn}
+                      onClick={() => setSelectedId(nextPage.id)}
+                    >
+                      <span style={styles.prevNextLabel}>Next →</span>
+                      <span style={styles.prevNextTitle}>{nextPage.label}</span>
+                    </button>
+                  ) : <div />}
+                </div>
+              )}
+
+              {/* Feedback */}
+              <div style={styles.feedback}>
+                <span style={{ fontSize: 13, color: "#666" }}>Was this helpful?</span>
+                <button style={styles.feedbackBtn}>👍 Yes</button>
+                <button style={styles.feedbackBtn}>👎 No</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function TreeNode({ item, selected, onSelect, level }) {
+      const [expanded, setExpanded] = useState(level === 0);
+
+      if (item.content) {
+        return (
+          <button
+            style={{
+              ...styles.treeNode,
+              paddingLeft: 16 + level * 16,
+              backgroundColor: item.content === selected ? "#e8f4fa" : "transparent",
+              color: item.content === selected ? "#00588F" : "#555",
+              fontWeight: item.content === selected ? 600 : 400,
+            }}
+            onClick={() => onSelect(item.content)}
+          >
+            {item.label}
+          </button>
+        );
+      }
+
+      return (
+        <div>
+          <button
+            style={{
+              ...styles.treeNode,
+              paddingLeft: 16 + level * 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              fontWeight: 600,
+              color: "#002447",
+            }}
+            onClick={() => setExpanded(!expanded)}
+          >
+            <span style={{ fontSize: 10, width: 10, textAlign: "center" }}>
+              {item.children && item.children.length > 0 ? (expanded ? "▼" : "▶") : ""}
+            </span>
+            {item.label}
+          </button>
+          {expanded && item.children && item.children.map((child) => (
+            <TreeNode
+              key={child.id}
+              item={child}
+              selected={selected}
+              onSelect={onSelect}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    const styles = {
+      portal: { display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f5f8fb", fontFamily: "inherit" },
+      header: { backgroundColor: "#fff", borderBottom: "1px solid #dde4ec", padding: "16px 24px", boxShadow: "0 1px 3px rgba(0,36,71,0.05)" },
+      headerContent: { maxWidth: 1400, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" },
+      logo: { fontSize: 18, fontWeight: 700, color: "#002447" },
+      subtitle: { fontSize: 12, color: "#888", marginTop: 2 },
+      searchBtn: { padding: "8px 14px", border: "1px solid #dde4ec", borderRadius: 6, background: "#f5f8fb", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 },
+      kbd: { fontSize: 10, padding: "2px 6px", borderRadius: 3, border: "1px solid #ddd", backgroundColor: "#eee", color: "#888" },
+      mainContent: { display: "flex", flex: 1, maxWidth: 1400, width: "100%", margin: "0 auto" },
+      sidebar: { width: 240, backgroundColor: "#fff", borderRight: "1px solid #dde4ec", maxHeight: "calc(100vh - 60px)", position: "sticky", top: 60 },
+      sidebarScroll: { overflowY: "auto", maxHeight: "calc(100vh - 60px)" },
+      treeNode: { display: "block", width: "100%", textAlign: "left", border: "none", padding: "10px 16px", cursor: "pointer", fontSize: 13, transition: "all 0.08s", borderLeft: "3px solid transparent" },
+      contentArea: { flex: 1, maxWidth: 800, margin: "0 auto", padding: "28px 44px 60px 44px" },
+      breadcrumbs: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2, marginBottom: 16, fontSize: 13 },
+      breadcrumbLink: { background: "none", border: "none", color: "#00588F", cursor: "pointer", fontSize: 13, padding: "2px 4px", borderRadius: 3 },
+      breadcrumbActive: { background: "none", border: "none", color: "#002447", fontWeight: 600, fontSize: 13, padding: "2px 4px", cursor: "default" },
+      breadcrumbSep: { color: "#bbb", margin: "0 3px", fontSize: 12 },
+      pageTitle: { fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 10px 0", color: "#002447", lineHeight: 1.25 },
+      meta: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, fontSize: 13, color: "#777", marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid #eee" },
+      metaDot: { color: "#ccc" },
+      tag: { fontSize: 11, padding: "2px 8px", borderRadius: 3, backgroundColor: "#e8f4fa", color: "#00588F", fontWeight: 500 },
+      contentBody: { display: "flex", flexDirection: "column", gap: 0 },
+      intro: { fontSize: 17, lineHeight: 1.75, color: "#333", marginBottom: 24 },
+      h2: { fontSize: 21, fontWeight: 700, margin: "36px 0 14px 0", color: "#002447", letterSpacing: "-0.01em" },
+      paragraph: { fontSize: 15, lineHeight: 1.75, color: "#333", margin: "0 0 16px 0" },
+      callout: { borderLeft: "4px solid", borderRadius: "0 8px 8px 0", padding: "14px 18px", margin: "14px 0 18px 0" },
+      calloutHeader: { display: "flex", alignItems: "center", fontSize: 14, fontWeight: 700, marginBottom: 4, color: "#002447" },
+      calloutText: { fontSize: 14, lineHeight: 1.65, margin: 0, color: "#333" },
+      list: { margin: "0 0 16px 0", paddingLeft: 24 },
+      listItem: { fontSize: 15, lineHeight: 1.75, color: "#333", marginBottom: 5 },
+      steps: { listStyle: "none", padding: 0, margin: "0 0 16px 0" },
+      stepItem: { display: "flex", alignItems: "flex-start", gap: 12, padding: "11px 0", borderBottom: "1px solid #f0f0f0", fontSize: 15, lineHeight: 1.65, color: "#333" },
+      stepNum: { flexShrink: 0, width: 26, height: 26, borderRadius: "50%", backgroundColor: "#00588F", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 },
+      tableWrap: { overflowX: "auto", margin: "10px 0 22px 0", borderRadius: 8, border: "1px solid #dde1e6" },
+      table: { width: "100%", borderCollapse: "collapse", fontSize: 14 },
+      th: { textAlign: "left", padding: "11px 16px", backgroundColor: "#f4f5f7", fontWeight: 700, borderBottom: "1px solid #dde1e6", color: "#002447", fontSize: 12 },
+      td: { padding: "11px 16px", borderBottom: "1px solid #f0f0f0", color: "#333" },
+      grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, margin: "10px 0 22px 0" },
+      gridCard: { display: "flex", flexDirection: "column", gap: 6, padding: "18px", borderRadius: 8, border: "1px solid #dde1e6" },
+      gridTitle: { fontSize: 15, fontWeight: 700, color: "#00588F" },
+      gridDesc: { fontSize: 14, color: "#002447", lineHeight: 1.55 },
+      prevNext: { display: "flex", justifyContent: "space-between", gap: 16, marginTop: 44, paddingTop: 22, borderTop: "1px solid #eee" },
+      prevNextBtn: { background: "none", border: "1px solid #dde1e6", borderRadius: 8, padding: "14px 18px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, minWidth: 180, flex: 1 },
+      prevNextLabel: { fontSize: 12, color: "#888", fontWeight: 500 },
+      prevNextTitle: { fontSize: 15, fontWeight: 600, color: "#00588F" },
+      feedback: { display: "flex", alignItems: "center", gap: 10, marginTop: 22, padding: "16px 0", borderTop: "1px solid #eee" },
+      feedbackBtn: { fontSize: 13, padding: "5px 14px", borderRadius: 6, border: "1px solid #dde1e6", background: "#fff", cursor: "pointer", color: "#555" },
+      searchOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(0,36,71,0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80, zIndex: 100 },
+      searchModal: { width: 580, maxHeight: "60vh", backgroundColor: "#fff", borderRadius: 12, boxShadow: "0 20px 60px rgba(0,36,71,0.2)", display: "flex", flexDirection: "column", overflow: "hidden" },
+      searchInputWrap: { display: "flex", alignItems: "center", padding: "16px 18px", borderBottom: "1px solid #eee", gap: 10 },
+      searchInput: { flex: 1, border: "none", outline: "none", fontSize: 16, fontFamily: "inherit", color: "#002447", background: "transparent" },
+      searchResults: { overflowY: "auto", padding: "8px" },
+      searchResult: { display: "flex", flexDirection: "column", gap: 2, width: "100%", padding: "11px 14px", border: "none", background: "none", cursor: "pointer", textAlign: "left", borderRadius: 6 },
+      searchResultTitle: { fontSize: 15, fontWeight: 600, color: "#002447" },
+      searchResultPath: { fontSize: 12, color: "#888" },
+      searchEmpty: { padding: "20px", textAlign: "center", color: "#888", fontSize: 14 },
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<DocsPortal />);
+  </script>
+</body>
+</html>
